@@ -40,6 +40,9 @@ namespace FastForwardLibrary
         /// </summary>
         public event EventHandler<string>? Log;
 
+
+        private Process? Process { get; set; }
+
         public FastForward(string binary)
         {
             if (!File.Exists(binary))
@@ -53,29 +56,47 @@ namespace FastForwardLibrary
         public async Task Execute(string command, CancellationToken cancellationToken)
         {
             var processInfo = CreateCommand(command);
-            using var process = Process.Start(processInfo);
+            Process = Process.Start(processInfo);
 
-            if (process == null)
+            if (Process == null)
             {
                 return;
             }
 
             try
             {
-                ProcessId = process.Id;
-                process.ErrorDataReceived += Process_ErrorDataReceived;
-                process.BeginErrorReadLine();
+                ProcessId = Process.Id;
+                Process.ErrorDataReceived += Process_ErrorDataReceived;
+                Process.BeginErrorReadLine();
 
-                await process.WaitForExitAsync(cancellationToken);
+                await Process.WaitForExitAsync(cancellationToken);
             }
             catch (OperationCanceledException e)
             {
-                process.Kill();
+                Process.Refresh();
+
+                if(!Process.HasExited)
+                {
+                    Process.Kill();
+                }
+                
                 throw new FastForwardException($"Execution have been terminated", e);
             }
             finally
             {
-                ExitCode = process.ExitCode;
+                ExitCode = Process.ExitCode;
+                Process.Dispose();
+                Process = null;
+            }
+        }
+
+        public void Close()
+        {
+            Process?.Refresh();
+
+            if(Process != null && !Process.HasExited)
+            {
+                Process.StandardInput.Write("q");
             }
         }
 
@@ -92,6 +113,7 @@ namespace FastForwardLibrary
                 FileName = Binary,
                 Arguments = command,
                 RedirectStandardError = true,
+                RedirectStandardInput = true,
                 CreateNoWindow = true
             };
 

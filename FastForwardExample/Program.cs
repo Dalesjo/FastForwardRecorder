@@ -30,7 +30,7 @@ ffmpeg.State.Update += stats;
 
 // CancelationToken can be used to terminate exeuction 
 var cancellationTokenSource = new CancellationTokenSource();
-cancellationTokenSource.CancelAfter(30000);
+cancellationTokenSource.CancelAfter(10000);
 
 try
 {
