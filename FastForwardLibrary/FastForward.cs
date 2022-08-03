@@ -1,14 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace FastForwardLibrary
 {
     public class FastForward
     {
+        public FastForward(string binary)
+        {
+            if (!File.Exists(binary))
+            {
+                throw new FastForwardException($"Cannot find ffmpeg binary {binary}");
+            }
+
+            Binary = binary;
+        }
+
+        /// <summary>
+        /// Will capture all log messages outputed by ffmpeg
+        /// </summary>
+        public event EventHandler<string>? Log;
+
         /// <summary>
         /// path to ffmpeg
         /// </summary>
@@ -16,8 +26,8 @@ namespace FastForwardLibrary
 
         /// <summary>
         /// returns the last known exitcode.
-        /// 
-        /// In windows 
+        ///
+        /// In windows
         /// -1 means the application was terminated/killed.
         /// 0 means ffmpeg finished it jobs successfully
         /// +1 means ffmpeg crashed.
@@ -29,28 +39,19 @@ namespace FastForwardLibrary
         /// </summary>
         public int ProcessId { get; private set; }
 
-
         /// <summary>
         /// The last known statistics off the encoding.
         /// </summary>
         public FastForwardState State { get; private set; } = new FastForwardState();
-
-        /// <summary>
-        /// Will capture all log messages outputed by ffmpeg
-        /// </summary>
-        public event EventHandler<string>? Log;
-
-
         private Process? Process { get; set; }
-
-        public FastForward(string binary)
+        public void Close()
         {
-            if (!File.Exists(binary))
-            {
-                throw new FastForwardException($"Cannot find ffmpeg binary {binary}");
-            }
+            Process?.Refresh();
 
-            Binary = binary;
+            if (Process != null && !Process.HasExited)
+            {
+                Process.StandardInput.Write("q");
+            }
         }
 
         public async Task Execute(string command, CancellationToken cancellationToken)
@@ -75,11 +76,11 @@ namespace FastForwardLibrary
             {
                 Process.Refresh();
 
-                if(!Process.HasExited)
+                if (!Process.HasExited)
                 {
                     Process.Kill();
                 }
-                
+
                 throw new FastForwardException($"Execution have been terminated", e);
             }
             finally
@@ -89,23 +90,6 @@ namespace FastForwardLibrary
                 Process = null;
             }
         }
-
-        public void Close()
-        {
-            Process?.Refresh();
-
-            if(Process != null && !Process.HasExited)
-            {
-                Process.StandardInput.Write("q");
-            }
-        }
-
-        private void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            State.Parse(e.Data!);
-            Log?.Invoke(this, e.Data!);
-        }
-
         private ProcessStartInfo CreateCommand(string command)
         {
             var process = new ProcessStartInfo
@@ -118,6 +102,12 @@ namespace FastForwardLibrary
             };
 
             return process;
+        }
+
+        private void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            State.Parse(e.Data!);
+            Log?.Invoke(this, e.Data!);
         }
     }
 }

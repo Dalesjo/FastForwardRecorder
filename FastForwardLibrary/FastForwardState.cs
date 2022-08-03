@@ -1,24 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace FastForwardLibrary
 {
     public class FastForwardState
     {
-        private readonly Regex sizeExpression = new(@"size=\s*(?<size>[0-9]+)(?<si>kB|mB|b)?");
-        private readonly Regex timeExpression = new(@"time=s*(?<duration>[0-9\:\.]+)");
-        private readonly Regex speedExpression = new(@"speed=\s*(?<speed>[0-9\.]+)x");
         private readonly Regex bitrateExpression = new(@"bitrate=\s*(?<bitrate>[0-9\.]+)(?<si>bits\/s|mbits\/s|kbits\/s)?.*");
-
+        private readonly Regex sizeExpression = new(@"size=\s*(?<size>[0-9]+)(?<si>kB|mB|b)?");
+        private readonly Regex speedExpression = new(@"speed=\s*(?<speed>[0-9\.]+)x");
+        private readonly Regex timeExpression = new(@"time=s*(?<duration>[0-9\:\.]+)");
         /// <summary>
-        /// The current file size in bytes of the output file
+        /// will trigger eachtime the State (size,bitrate,time,speed) have been updated for ffmpeg.
         /// </summary>
-        public Int64 Size { get; private set; } = 0;
+        public event EventHandler? Update;
 
         /// <summary>
         /// The current bitrate in bytes.
@@ -26,20 +20,18 @@ namespace FastForwardLibrary
         public float Bitrate { get; private set; } = 0;
 
         /// <summary>
-        /// How long (according to ffmpeg) the encoding have lasted
+        /// The current file size in bytes of the output file
         /// </summary>
-        public TimeSpan Time { get; private set; } = TimeSpan.MinValue;
-
+        public Int64 Size { get; private set; } = 0;
         /// <summary>
         /// How fast the encoding is going 1 means realtime.
         /// </summary>
         public float Speed { get; private set; } = 0;
 
         /// <summary>
-        /// will trigger eachtime the State (size,bitrate,time,speed) have been updated for ffmpeg. 
+        /// How long (according to ffmpeg) the encoding have lasted
         /// </summary>
-        public event EventHandler? Update;
-
+        public TimeSpan Time { get; private set; } = TimeSpan.MinValue;
         public void Parse(string line)
         {
             if (line == null)
@@ -99,19 +91,6 @@ namespace FastForwardLibrary
             return match.Success;
         }
 
-        private bool GetSpeed(string line)
-        {
-            var match = speedExpression.Match(line);
-            if (!match.Success)
-            {
-                return false;
-            }
-
-            Speed = float.Parse(match.Groups["speed"].Value, CultureInfo.InvariantCulture);
-
-            return match.Success;
-        }
-
         private bool GetSize(string line)
         {
             var match = sizeExpression.Match(line);
@@ -133,6 +112,19 @@ namespace FastForwardLibrary
             {
                 Size *= 1000000;
             }
+
+            return match.Success;
+        }
+
+        private bool GetSpeed(string line)
+        {
+            var match = speedExpression.Match(line);
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            Speed = float.Parse(match.Groups["speed"].Value, CultureInfo.InvariantCulture);
 
             return match.Success;
         }
