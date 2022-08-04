@@ -34,6 +34,15 @@ namespace FastForwardLibrary
         /// </summary>
         public int ExitCode { get; private set; }
 
+        public bool IsRunning
+        {
+            get
+            {
+                Process?.Refresh();
+                return Process != null && !Process.HasExited;
+            }
+        }
+
         /// <summary>
         /// The Process ID for the ffmpeg process in windows/linux
         /// </summary>
@@ -44,50 +53,58 @@ namespace FastForwardLibrary
         /// </summary>
         public FastForwardState State { get; private set; } = new FastForwardState();
         private Process? Process { get; set; }
-        public void Close()
+        public void Start(string command)
         {
-            Process?.Refresh();
-
-            if (Process != null && !Process.HasExited)
+            if (IsRunning)
             {
-                Process.StandardInput.Write("q");
+                throw new FastForwardException($"A Process is already running");
             }
-        }
 
-        public async Task Execute(string command, CancellationToken cancellationToken)
-        {
             var processInfo = CreateCommand(command);
             Process = Process.Start(processInfo);
 
             if (Process == null)
             {
-                return;
+                throw new FastForwardException($"Failed to start Process.");
             }
 
-            try
-            {
-                ProcessId = Process.Id;
-                Process.ErrorDataReceived += Process_ErrorDataReceived;
-                Process.BeginErrorReadLine();
+            ProcessId = Process.Id;
+            Process.ErrorDataReceived += Process_ErrorDataReceived;
+            Process.Exited += Process_Exited;
+            Process.BeginErrorReadLine();
+        }
 
-                await Process.WaitForExitAsync(cancellationToken);
-            }
-            catch (OperationCanceledException e)
+        public async Task Stop(CancellationToken cancellationToken = default)
+        {
+            if (IsRunning)
             {
-                Process.Refresh();
-
-                if (!Process.HasExited)
+                try
                 {
-                    Process.Kill();
+                    await Process!.StandardInput.WriteAsync("q");
+                    await Process.WaitForExitAsync(cancellationToken);
                 }
+                catch (OperationCanceledException)
+                {
+                    Process!.Refresh();
 
-                throw new FastForwardException($"Execution have been terminated", e);
+                    if (!Process.HasExited)
+                    {
+                        Process.Kill();
+                    }
+                } 
+                finally
+                {
+                    Process!.Dispose();
+                    Process = null;
+                    ProcessId = default;
+                }
             }
-            finally
+        }
+        public async Task WaitForExitAsync()
+        {
+            if (IsRunning)
             {
-                ExitCode = Process.ExitCode;
-                Process.Dispose();
-                Process = null;
+                await Process!.WaitForExitAsync();
             }
         }
         private ProcessStartInfo CreateCommand(string command)
@@ -108,6 +125,14 @@ namespace FastForwardLibrary
         {
             State.Parse(e.Data!);
             Log?.Invoke(this, e.Data!);
+        }
+
+        private void Process_Exited(object? sender, EventArgs e)
+        {
+            if(sender is Process process)
+            {
+                ExitCode = process.ExitCode;
+            }
         }
     }
 }

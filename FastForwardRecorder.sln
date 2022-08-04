@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastForwardLibrary", "FastForwardLibrary\FastForwardLibrary.csproj", "{69BC3B72-EC6C-41DE-A284-0B1D2A07173D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FastForwardLibrary", "FastForwardLibrary\FastForwardLibrary.csproj", "{69BC3B72-EC6C-41DE-A284-0B1D2A07173D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastForwardExample", "FastForwardExample\FastForwardExample.csproj", "{B4FB6C1A-F251-4C68-9E55-5B44D70D53B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FastForwardExample", "FastForwardExample\FastForwardExample.csproj", "{B4FB6C1A-F251-4C68-9E55-5B44D70D53B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastForwardRecorder", "FastForwardRecorder\FastForwardRecorder.csproj", "{591F8A4C-7089-4076-8823-40F93EA59926}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{B4FB6C1A-F251-4C68-9E55-5B44D70D53B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4FB6C1A-F251-4C68-9E55-5B44D70D53B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4FB6C1A-F251-4C68-9E55-5B44D70D53B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{591F8A4C-7089-4076-8823-40F93EA59926}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{591F8A4C-7089-4076-8823-40F93EA59926}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{591F8A4C-7089-4076-8823-40F93EA59926}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{591F8A4C-7089-4076-8823-40F93EA59926}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
