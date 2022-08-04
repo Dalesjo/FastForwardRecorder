@@ -95,19 +95,19 @@ namespace FastForwardLibrary
             }
         }
 
-        private void Clean()
-        {
-            Process?.Dispose();
-            Process = null;
-            ProcessId = default;
-        }
-
         public async Task WaitForExitAsync()
         {
             if (IsRunning)
             {
                 await Process!.WaitForExitAsync();
             }
+        }
+
+        private void Clean()
+        {
+            Process?.Dispose();
+            Process = null;
+            ProcessId = default;
         }
         private ProcessStartInfo CreateCommand(string command)
         {

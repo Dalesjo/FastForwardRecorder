@@ -7,14 +7,12 @@ namespace FastForwardRecorder.Controllers
     [ApiController]
     public class RecordController : ControllerBase
     {
-        private RecordWorker RecordWorker { get; set; }
-
         public RecordController(RecordWorker recordWorker)
         {
             RecordWorker = recordWorker;
         }
 
-
+        private RecordWorker RecordWorker { get; set; }
         [HttpGet("start")]
         public IActionResult Start()
         {
