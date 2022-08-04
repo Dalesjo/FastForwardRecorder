@@ -92,14 +92,16 @@ namespace FastForwardLibrary
                         Process.Kill();
                     }
                 } 
-                finally
-                {
-                    Process!.Dispose();
-                    Process = null;
-                    ProcessId = default;
-                }
             }
         }
+
+        private void Clean()
+        {
+            Process?.Dispose();
+            Process = null;
+            ProcessId = default;
+        }
+
         public async Task WaitForExitAsync()
         {
             if (IsRunning)
@@ -132,6 +134,7 @@ namespace FastForwardLibrary
             if(sender is Process process)
             {
                 ExitCode = process.ExitCode;
+                Clean();
             }
         }
     }
