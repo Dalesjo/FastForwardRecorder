@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FastForwardRecorder.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/record")]
     [ApiController]
     public class RecordController : ControllerBase
     {

@@ -74,25 +74,29 @@ namespace FastForwardLibrary
             Process.BeginErrorReadLine();
         }
 
-        public async Task Stop(CancellationToken cancellationToken = default)
+        public async Task<bool> Stop(CancellationToken cancellationToken = default)
         {
-            if (IsRunning)
+            if (!IsRunning)
             {
-                try
-                {
-                    await Process!.StandardInput.WriteAsync("q");
-                    await Process.WaitForExitAsync(cancellationToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    Process!.Refresh();
-
-                    if (!Process.HasExited)
-                    {
-                        Process.Kill();
-                    }
-                } 
+                return false;
             }
+
+            try
+            {
+                await Process!.StandardInput.WriteAsync("q");
+                await Process.WaitForExitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                Process!.Refresh();
+
+                if (!Process.HasExited)
+                {
+                    Process.Kill();
+                }
+            }
+
+            return true;
         }
 
         public async Task WaitForExitAsync()

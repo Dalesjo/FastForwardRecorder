@@ -1,4 +1,6 @@
 ﻿using FastForwardLibrary;
+using FastForwardRecorder.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace FastForwardRecorder
 {
@@ -10,8 +12,18 @@ namespace FastForwardRecorder
 
         TaskCompletionSource<bool> IsSomethingLoading = new TaskCompletionSource<bool>();
 
-        public RecordWorker()
+        private ILogger Log { get; set; }
+
+        public IHubContext<RecordHub, IRecordClient> RecordHub { get; private set; }
+
+        public RecordWorker(
+                IHubContext<RecordHub, IRecordClient> recordHub,
+                ILogger<RecordWorker> log
+            )
         {
+            Log = log;
+            RecordHub = recordHub;
+
             var bin = @"c:\Program Files\ffmpeg\ffmpeg-5.1\bin\ffmpeg.exe";
             FastForward = new FastForward(bin);
             FastForward.Log += logger;
@@ -32,7 +44,7 @@ namespace FastForwardRecorder
         {
             if (sender is FastForward fastForward)
             {
-                Console.WriteLine($"log ={line}");
+                //Console.WriteLine($"log ={line}");
             }
         }
 
@@ -40,7 +52,8 @@ namespace FastForwardRecorder
         {
             if (sender is FastForwardState state)
             {
-                Console.WriteLine($"time={state.Time}");
+                RecordHub.Clients.All.State(state);
+                //Console.WriteLine($"time={state.Time}");
             }
         }
 
