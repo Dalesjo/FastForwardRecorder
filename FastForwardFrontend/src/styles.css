@@ -1,0 +1,23 @@
+/* You can add global styles to this file, and also import other style files */
+@font-face {
+    font-family: 'digital-7';
+
+    font-display: swap;
+    src: local(''),
+        url('/assets/fonts/digital-7/digital-7\ (mono).ttf') format('truetype');
+}
+
+body {
+    font-family: 'digital-7', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size:24px;
+    background-color: black;
+    color:red;
+    margin: 1em;
+    padding: 0 0 0 0;
+}
+
+
+
+
+

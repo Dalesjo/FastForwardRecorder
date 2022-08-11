@@ -4,14 +4,21 @@ namespace FastForwardLibrary
 {
     public class FastForward
     {
-        public FastForward(string binary)
+        public FastForward(string binary,string workingDirectory)
         {
             if (!File.Exists(binary))
             {
                 throw new FastForwardException($"Cannot find ffmpeg binary {binary}");
             }
 
+            if(!Directory.Exists(workingDirectory))
+            {
+                throw new FastForwardException($"Cannot find working directory {workingDirectory}");
+            }
+
             Binary = binary;
+            WorkingDirectory = workingDirectory;
+            State = new FastForwardState(WorkingDirectory);
         }
 
         /// <summary>
@@ -20,9 +27,19 @@ namespace FastForwardLibrary
         public event EventHandler<string>? Log;
 
         /// <summary>
+        /// Called when process has exited
+        /// </summary>
+        public event EventHandler? Exited;
+
+        /// <summary>
         /// path to ffmpeg
         /// </summary>
         public string Binary { get; private set; }
+
+        /// <summary>
+        /// path to ffmpeg
+        /// </summary>
+        public string WorkingDirectory { get; private set; }
 
         /// <summary>
         /// returns the last known exitcode.
@@ -51,9 +68,9 @@ namespace FastForwardLibrary
         /// <summary>
         /// The last known statistics off the encoding.
         /// </summary>
-        public FastForwardState State { get; private set; } = new FastForwardState();
+        public FastForwardState State { get; private set; }
         private Process? Process { get; set; }
-        public void Start(string command)
+        public bool Start(string command)
         {
             if (IsRunning)
             {
@@ -72,6 +89,8 @@ namespace FastForwardLibrary
             Process.ErrorDataReceived += Process_ErrorDataReceived;
             Process.Exited += Process_Exited;
             Process.BeginErrorReadLine();
+
+            return Process != null && !Process.HasExited;
         }
 
         public async Task<bool> Stop(CancellationToken cancellationToken = default)
@@ -118,6 +137,7 @@ namespace FastForwardLibrary
             var process = new ProcessStartInfo
             {
                 FileName = Binary,
+                WorkingDirectory = WorkingDirectory,
                 Arguments = command,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
@@ -139,6 +159,7 @@ namespace FastForwardLibrary
             {
                 ExitCode = process.ExitCode;
                 Clean();
+                Exited?.Invoke(this, EventArgs.Empty);
             }
         }
     }

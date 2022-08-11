@@ -22,7 +22,13 @@ namespace FastForwardLibrary
         /// <summary>
         /// The current file size in bytes of the output file
         /// </summary>
-        public Int64 Size { get; private set; } = 0;
+        public long Size { get; private set; } = 0;
+
+        /// <summary>
+        /// The current file size in bytes of the output file
+        /// </summary>
+        public long FreeSpace { get; private set; } = 0;
+
         /// <summary>
         /// How fast the encoding is going 1 means realtime.
         /// </summary>
@@ -31,7 +37,23 @@ namespace FastForwardLibrary
         /// <summary>
         /// How long (according to ffmpeg) the encoding have lasted
         /// </summary>
-        public TimeSpan Time { get; private set; } = TimeSpan.MinValue;
+        public double Time { get; private set; } = default;
+
+        /// <summary>
+        /// path to ffmpeg
+        /// </summary>
+        public string WorkingDirectory { get; private set; }
+
+        public long Iterartions { get; private set; } = 0;
+
+        public int EveryTime { get; set; } = 10;
+
+        public FastForwardState(string workingDirectory)
+        {
+            WorkingDirectory = workingDirectory;
+            getFreeSpace();
+        }
+
         public void Parse(string line)
         {
             if (line == null)
@@ -50,7 +72,17 @@ namespace FastForwardLibrary
             GetSpeed(line);
             GetBitrate(line);
 
+            if (Iterartions++ % EveryTime == 0)
+            {
+                getFreeSpace();
+            }
+
             Update?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void getFreeSpace()
+        {
+            FreeSpace = new DriveInfo(WorkingDirectory).AvailableFreeSpace;
         }
 
         private bool GetBitrate(string line)
@@ -86,7 +118,7 @@ namespace FastForwardLibrary
             }
 
             var seconds = match.Groups[1].Value;
-            Time = TimeSpan.Parse(seconds);
+            Time = TimeSpan.Parse(seconds).TotalSeconds;
 
             return match.Success;
         }

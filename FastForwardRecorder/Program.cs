@@ -1,5 +1,6 @@
 using FastForwardRecorder;
 using FastForwardRecorder.Hubs;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.EventLog;
 using NLog.Web;
 
@@ -7,7 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(o =>
+{
+    o.EnableDetailedErrors = true;
+});
 builder.Services.AddControllers();
 //builder.Services.AddHostedService<RecordWorker>();
 
@@ -32,9 +36,20 @@ if (OperatingSystem.IsWindows())
 }
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+var MyAllowSpecificOrigins = "DalesjoCors";
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        
+                      policy =>
+                      {
+                          policy.WithOrigins("https://samuel.dalesjo.nu");
+                          policy.AllowCredentials();
+                          policy.WithHeaders("x-requested-with", "x-signalr-user-agent");
+                      });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -44,11 +59,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseCors(MyAllowSpecificOrigins);
 app.MapControllers();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(@"c:\tmp\ljud\"),
+    RequestPath = "/audio"
+});
+
+
 app.MapHub<RecordHub>("/hubs/record");
 
 app.Run();

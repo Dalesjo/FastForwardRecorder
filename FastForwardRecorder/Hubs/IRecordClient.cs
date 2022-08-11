@@ -4,9 +4,9 @@ namespace FastForwardRecorder.Hubs
 {
     public interface IRecordClient
     {
-        Task Play();
+        Task Started();
 
-        Task Stop();
+        Task Stopped();
 
         Task State(FastForwardState fastForwardState);
     }

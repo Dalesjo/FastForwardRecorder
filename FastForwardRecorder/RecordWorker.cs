@@ -10,11 +10,22 @@ namespace FastForwardRecorder
 
         private AutoResetEvent autoReset = new AutoResetEvent(false);
 
-        TaskCompletionSource<bool> IsSomethingLoading = new TaskCompletionSource<bool>();
-
         private ILogger Log { get; set; }
 
-        public IHubContext<RecordHub, IRecordClient> RecordHub { get; private set; }
+        private IHubContext<RecordHub, IRecordClient> RecordHub { get; set; }
+
+        public bool isRunning { get {
+                return FastForward.IsRunning;
+            }
+        }
+
+        public FastForwardState State
+        {
+            get
+            {
+                return FastForward.State;
+            }
+        }
 
         public RecordWorker(
                 IHubContext<RecordHub, IRecordClient> recordHub,
@@ -25,14 +36,33 @@ namespace FastForwardRecorder
             RecordHub = recordHub;
 
             var bin = @"c:\Program Files\ffmpeg\ffmpeg-5.1\bin\ffmpeg.exe";
-            FastForward = new FastForward(bin);
+            var directory = @"c:\tmp\ljud\";
+            FastForward = new FastForward(bin, directory);
             FastForward.Log += logger;
             FastForward.State.Update += stats;
+            FastForward.Exited += FastForward_Exited;
+        }
+
+        private void FastForward_Exited(object? sender, EventArgs e)
+        {
+            RecordHub.Clients.All.Stopped();
+        }
+
+        private void FastForward_Started()
+        {
+            Log.LogInformation("FastForward_Started");
+            RecordHub.Clients.All.Started();
         }
 
         public void Start(string command)
         {
-            FastForward.Start(command);
+            var started = FastForward.Start(command);
+            
+            if(started)
+            {
+                FastForward_Started();
+            }
+            
         }
 
         public async Task Stop()
